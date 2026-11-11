@@ -2,7 +2,7 @@
    外部と通信するのは「現在地」ボタンで住所を調べるときだけ（緯度・経度を住所検索サービスに送る）。 */
 (function(){
 "use strict";
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.1";
 const DEFAULT_PLACES = ["リサイクルセンター","北西粗大","大安粗大","藤原粗大"];
 const DEFAULT_QUICK  = ["約束","覚え","いただきもの"];
 
@@ -215,6 +215,7 @@ function openForm(rec){
   $("#fAddr").value = draft.address || "";
   $("#fMemo").value = draft.memo || "";
   setGps("");
+  paintMapLink();
   $("#deleteBtn").hidden = isNew;
   paintPlaceChips(); paintQuickChips(); paintPhotos();
   snapshot = formState();
@@ -306,6 +307,17 @@ async function deleteCurrent(){
 }
 
 /* ---------- 現在地 → 住所 ---------- */
+/* 記録した位置（なければ住所）をiPhoneの「マップ」で開くリンク */
+function paintMapLink(){
+  const a = $("#mapLink"); if(!a || !draft) return;
+  const addr = $("#fAddr").value.trim(), name = $("#fPlace").value.trim();
+  if(draft.lat!=null && draft.lon!=null){
+    a.href = `https://maps.apple.com/?ll=${draft.lat},${draft.lon}&q=${encodeURIComponent(name||addr||"記録した場所")}`;
+    a.hidden = false;
+  }else if(addr){
+    a.href = `https://maps.apple.com/?q=${encodeURIComponent(addr)}`; a.hidden = false;
+  }else a.hidden = true;
+}
 function setGps(msg, err){ const p=$("#gpsStatus"); p.textContent = msg; p.classList.toggle("err", !!err); }
 
 function withTimeout(ms){ const c = new AbortController(); setTimeout(()=>c.abort(), ms); return c.signal; }
@@ -363,12 +375,12 @@ function locate(){
   navigator.geolocation.getCurrentPosition(async pos=>{
     if(!draft || draft.id!==forId){ btn.removeAttribute("aria-busy"); return; }
     const lat = +pos.coords.latitude.toFixed(6), lon = +pos.coords.longitude.toFixed(6);
-    draft.lat = lat; draft.lon = lon;
+    draft.lat = lat; draft.lon = lon; paintMapLink();
     setGps("住所を調べています…");
     try{
       const a = await reverseGeocode(lat, lon);
       if(!draft || draft.id!==forId) return;
-      if(a){ $("#fAddr").value = a; setGps(""); }
+      if(a){ $("#fAddr").value = a; setGps(""); paintMapLink(); }
       else setGps("住所が見つかりませんでした。位置は記録されます。", true);
     }catch(e){
       if(draft && draft.id===forId) setGps("通信できないため住所を出せませんでした。位置は記録されます。", true);
@@ -461,6 +473,7 @@ function bind(){
   $("#deleteBtn").onclick = deleteCurrent;
   $("#gpsBtn").onclick = locate;
   $("#fPlace").addEventListener("input", paintPlaceChips);
+  $("#fAddr").addEventListener("input", paintMapLink);
   $("#fPlace").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); $("#fMemo").focus(); } });
   $("#placeChips").addEventListener("click", e=>{
     const c = e.target.closest("[data-place]"); if(!c) return;
