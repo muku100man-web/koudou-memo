@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>行動メモ</title>
+<meta name="description" content="どこへ行って、何をしたかを一言で残す記録帳">
+<meta name="theme-color" content="#FBF5EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E1915" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="行動メモ">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top gutter">
+  <div class="bar">
+    <h1>行動メモ <small id="today"></small></h1>
+    <button class="iconbtn" id="openSettings" aria-label="設定">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="list" aria-selected="true">きろく</button>
+    <button role="tab" data-tab="month" aria-selected="false">月のまとめ</button>
+  </nav>
+</header>
+
+<main class="gutter">
+  <section id="listView"></section>
+  <section id="monthView" hidden></section>
+</main>
+
+<div class="fabwrap">
+  <button class="fab" id="addBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    記録する
+  </button>
+</div>
+
+<!-- 記録の入力シート -->
+<div class="scrim" id="scrim" hidden></div>
+<form class="sheet" id="sheet" hidden autocomplete="off" novalidate>
+  <div class="grip" aria-hidden="true"></div>
+  <div class="sheethead">
+    <button type="button" class="textbtn" id="cancelBtn">やめる</button>
+    <h2 id="sheetTitle">記録する</h2>
+    <button type="submit" class="savebtn" id="saveBtn">保存</button>
+  </div>
+  <div class="sheetbody">
+    <label class="field">
+      <span class="lbl">日時</span>
+      <input type="datetime-local" id="fAt" required>
+    </label>
+
+    <div class="field">
+      <span class="lbl">場所</span>
+      <div class="chips" id="placeChips"></div>
+      <input type="text" id="fPlace" placeholder="場所の名前（例：〇〇銀行）" enterkeyhint="next">
+    </div>
+
+    <div class="field">
+      <span class="lbl">住所</span>
+      <div class="addrrow">
+        <input type="text" id="fAddr" placeholder="ボタンで自動入力、または手で入力">
+        <button type="button" class="gpsbtn" id="gpsBtn" aria-label="現在地の住所を入れる">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+          現在地
+        </button>
+      </div>
+      <p class="hint" id="gpsStatus" aria-live="polite"></p>
+    </div>
+
+    <div class="field">
+      <span class="lbl">メモ</span>
+      <div class="chips" id="quickChips"></div>
+      <textarea id="fMemo" rows="3" placeholder="やったこと（例：振り込み 3万円）"></textarea>
+    </div>
+
+    <div class="field">
+      <span class="lbl">写真</span>
+      <div class="photos" id="photos"></div>
+    </div>
+
+    <button type="button" class="deletebtn" id="deleteBtn" hidden>この記録を削除</button>
+  </div>
+</form>
+
+<!-- 設定シート -->
+<div class="sheet" id="settings" hidden>
+  <div class="grip" aria-hidden="true"></div>
+  <div class="sheethead">
+    <span></span>
+    <h2>設定</h2>
+    <button type="button" class="savebtn" id="settingsDone">完了</button>
+  </div>
+  <div class="sheetbody">
+    <label class="field">
+      <span class="lbl">報告に使う場所 <em>1行に1つ</em></span>
+      <textarea id="sPlaces" rows="4"></textarea>
+      <span class="hint">「月のまとめ」に出る場所です。記録画面でボタンになります。</span>
+    </label>
+    <label class="field">
+      <span class="lbl">ワンタップボタン <em>1行に1つ</em></span>
+      <textarea id="sQuick" rows="4"></textarea>
+      <span class="hint">押すとメモ欄にその言葉が入ります。</span>
+    </label>
+    <div class="field">
+      <span class="lbl">バックアップ</span>
+      <div class="btnrow">
+        <button type="button" class="subbtn" id="exportBtn">書き出す</button>
+        <label class="subbtn">読み込む<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+      </div>
+      <span class="hint">記録はこのiPhoneの中だけに保存されています。機種変更の前などに「書き出す」でファイルに保存してください。</span>
+    </div>
+    <p class="ver" id="ver"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button type="button" id="toastAct" hidden></button></div>
+
+<input type="file" id="photoInput" accept="image/*" multiple hidden>
+<script src="app.js"></script>
+</body>
+</html>
